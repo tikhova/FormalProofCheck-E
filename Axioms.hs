@@ -2,7 +2,8 @@ module Axioms where
 
 import Synt
 import Data.Maybe
-import Variables
+import VUtils
+import Data.List
 
 isAxiom :: Expression -> Bool
 isAxiom expr =
@@ -111,28 +112,19 @@ findSubstitution :: String -> Expression -> Expression -> Maybe Term
 findSubstitution x (Wrap sign a b) (Wrap sign' a' b')
   | sign == sign'                                          = compareSubstitution (findSubstitution x a a') (findSubstitution x b b')
 findSubstitution x (Not a) (Not a')                        = findSubstitution x a a'
-findSubstitution x (Quant q var a) (Quant q' var' a')      = if (var /= var') || (q /= q') then Nothing else findSubstitution x a a'
+findSubstitution x (Quant q var a) (Quant q' var' a')
+  | (var == var') && (q == q')                             = findSubstitution x a a'
 findSubstitution x (Predicate a ts) (Predicate a' ts')
-  | a == a' && length ts == length ts'                     =  if (length subsWOAny /= 0) && (allEqual subsWOAny)
-                                                                then Just $ head subsWOAny
-                                                                else if (elem (Var "+") substitutions) && (length subsWOAny == 0)
-                                                                  then Just (Var "+")
-                                                                  else Nothing
-                                                              where substitutions = catMaybes $ Prelude.map (uncurry (findSubstitutionT x)) (zip ts ts')
-                                                                    subsWOAny     = filter ((/=) (Var "+")) substitutions
+  | a == a' && length ts == length ts'                     = foldl1 compareSubstitution substitutions
+                                                             where substitutions = Prelude.map (uncurry (findSubstitutionT x)) (zip ts ts')
 findSubstitution x a b                                     = Nothing
 
 findSubstitutionT :: String -> Term -> Term -> Maybe Term
 findSubstitutionT x (WrapT op a b) (WrapT op' a' b')
   | op == op'                                             = compareSubstitution (findSubstitutionT x a a') (findSubstitutionT x b b')
 findSubstitutionT x (Function f ts) (Function f' ts')
-  | f == f' && length ts == length ts'                    = if (length subsWOAny /= 0) && (allEqual subsWOAny)
-                                                                then Just $ head subsWOAny
-                                                                else if (elem (Var "+") substitutions) && (length subsWOAny == 0)
-                                                                  then Just (Var "+")
-                                                                  else Nothing
-                                                            where substitutions = catMaybes $ Prelude.map (uncurry (findSubstitutionT x)) (zip ts ts')
-                                                                  subsWOAny     = filter ((/=) (Var "+")) substitutions
+  | f == f' && length ts == length ts'                    = foldl1 compareSubstitution substitutions
+                                                            where substitutions = Prelude.map (uncurry (findSubstitutionT x)) (zip ts ts')
 findSubstitutionT x (Increment t) (Increment t')          = findSubstitutionT x t t'
 findSubstitutionT x (Var a) b
   | a == x                                                = Just b
@@ -140,12 +132,9 @@ findSubstitutionT x a b
   | a == b                                                = Just (Var "+")
   | otherwise                                             = Nothing
 
-
 compareSubstitution :: Maybe Term -> Maybe Term -> Maybe Term
 compareSubstitution a b
   | a == b                 = a
   | a == Just (Var "+")    = b
   | b == Just (Var "+")    = a
   | otherwise              = Nothing
-
-allEqual list = length (Prelude.filter ((/=) $ head list) list) == 0

@@ -1,4 +1,4 @@
-module Variables where
+module VUtils where
 
 import Synt
 import Prelude
@@ -50,8 +50,9 @@ noOccurence x expr = case expr of
 
 noOccurenceT :: Term -> Term -> Bool
 noOccurenceT x term = case term of
-  WrapT _ a b            -> (noOccurenceT x a) && (noOccurenceT x b)
-  Function _ ts          -> and $ Prelude.map (noOccurenceT x) ts
-  Increment a            -> noOccurenceT x a
-  Var var | x == Var var -> False
-  otherwise              -> True
+  WrapT _ a b      -> (noOccurenceT x a) && (noOccurenceT x b)
+  Function _ ts    -> and $ Prelude.map (noOccurenceT x) ts
+  Increment a      -> noOccurenceT x a
+  Var var
+    | x == Var var -> False
+  otherwise        -> True

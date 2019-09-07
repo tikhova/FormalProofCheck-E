@@ -1,7 +1,7 @@
 module Rules where
 
 import Synt
-import Variables
+import VUtils
 import Prelude
 import Data.Map.Strict as M
 

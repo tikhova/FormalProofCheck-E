@@ -4,7 +4,7 @@ import Lex
 import Synt
 import Axioms
 import Rules
-import Variables
+import VUtils
 import Data.Map.Strict as M
 import System.IO               (isEOF)
 import Prelude
@@ -43,10 +43,10 @@ check :: Expression
          -> Bool
 check expr m2expr m2num hyps forMP = hyp || axiom || mp || isAny || isExists
     where
-      hyp = elem expr hyps
-      axiom = isAxiom expr
-      mp = isMP expr m2expr m2num forMP
-      isAny = isAnyRule expr m2num
+      hyp      = elem expr hyps
+      axiom    = isAxiom expr
+      mp       = isMP expr m2expr m2num forMP
+      isAny    = isAnyRule expr m2num
       isExists = isExistsRule expr m2num
 
 
@@ -56,6 +56,6 @@ main = do
   let (hyps, expr) = parseHeader $ alexScanTokens firstLine
   result <- checkProof M.empty M.empty hyps M.empty (False, 1) expr
   case result of
-    (True, 0) -> putStrLn "Proof is correct"
+    (True, 0)  -> putStrLn "Proof is correct"
     (False, 0) -> putStrLn "Required hasn’t been proven"
-    (_, n) -> putStrLn $ "Line #" ++ show n ++ " can’t be obtained"
+    (_, n)     -> putStrLn $ "Line #" ++ show n ++ " can’t be obtained"
